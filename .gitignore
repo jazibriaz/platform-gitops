@@ -1,0 +1,8 @@
+# Terraform working files and local state never go in Git
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfplan
+# .terraform.lock.hcl IS committed: it pins exact provider versions for everyone
+tfplan
