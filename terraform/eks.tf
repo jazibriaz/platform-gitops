@@ -33,6 +33,17 @@ module "eks" {
         }
       }
     }
+    console_viewer = {
+      principal_arn = "arn:aws:iam::833167447551:root"
+      policy_associations = {
+        view = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminViewPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
   }
 
   # Core add-ons managed by EKS. vpc-cni and the pod-identity agent must exist before
