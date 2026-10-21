@@ -43,3 +43,19 @@ variable "github_owner" {
     error_message = "Set github_owner in terraform.tfvars to your GitHub username."
   }
 }
+
+# GitHub's OIDC subject includes immutable numeric IDs: repo:<owner>@<owner_id>/<repo>@<repo_id>
+variable "github_owner_id" {
+  description = "Numeric GitHub account ID"
+  type        = string
+}
+
+variable "infra_repo_id" {
+  description = "Numeric ID of the platform-gitops repo"
+  type        = string
+}
+
+variable "app_repo_id" {
+  description = "Numeric ID of the pcforge repo"
+  type        = string
+}

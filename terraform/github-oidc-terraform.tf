@@ -9,7 +9,7 @@
 
 locals {
   state_bucket = "pcforge-tfstate-${data.aws_caller_identity.current.account_id}"
-  infra_repo   = "repo:${var.github_owner}/platform-gitops"
+  infra_repo   = "repo:${var.github_owner}@${var.github_owner_id}/platform-gitops@${var.infra_repo_id}"
 }
 
 # ---------- plan role ----------
