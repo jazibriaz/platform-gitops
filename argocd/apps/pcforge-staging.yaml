@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: pcforge-staging
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/jazibriaz/pcforge.git
+    targetRevision: main
+    path: charts/pcforge
+    helm:
+      valueFiles:
+        - values-staging.yaml      # relative to the chart folder
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: pcforge-staging
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
