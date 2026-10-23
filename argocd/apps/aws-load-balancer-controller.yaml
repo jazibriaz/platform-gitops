@@ -1,0 +1,41 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: aws-load-balancer-controller
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://aws.github.io/eks-charts      # a Helm repo, not Git
+    chart: aws-load-balancer-controller
+    targetRevision: 3.6.1                # pinned
+    helm:
+      releaseName: aws-load-balancer-controller
+      valuesObject:
+        clusterName: pcforge
+        region: eu-west-1
+        vpcId: vpc-0401f51d80b9f756e
+        serviceAccount:
+          create: true
+          name: aws-load-balancer-controller        # must match the Pod Identity association Terraform made
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  # The chart generates a new webhook TLS certificate every time it is rendered.
+  # Without this, Argo CD would see a "change" on every check and keep re-syncing.
+  ignoreDifferences:
+    - group: admissionregistration.k8s.io
+      kind: MutatingWebhookConfiguration
+      jqPathExpressions: [".webhooks[].clientConfig.caBundle"]
+    - group: admissionregistration.k8s.io
+      kind: ValidatingWebhookConfiguration
+      jqPathExpressions: [".webhooks[].clientConfig.caBundle"]
+    - kind: Secret
+      name: aws-load-balancer-tls
+      jsonPointers: ["/data"]
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - RespectIgnoreDifferences=true
