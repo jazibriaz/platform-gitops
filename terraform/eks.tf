@@ -61,9 +61,11 @@ module "eks" {
 
   eks_managed_node_groups = {
     default = {
-      ami_type       = "AL2023_x86_64_STANDARD"
-      capacity_type  = "SPOT"                      # ~70% cheaper; fine for a lab, AWS can reclaim it
-      instance_types = ["t3.medium", "t3a.medium"] # 2 types = more Spot pools = fewer interruptions
+      ami_type                       = "AL2023_x86_64_STANDARD"
+      use_latest_ami_release_version = false # node upgrades are their own PR
+      ami_release_version            = "1.36.5-20261019"
+      capacity_type                  = "SPOT"                      # ~70% cheaper; fine for a lab, AWS can reclaim it
+      instance_types                 = ["t3.medium", "t3a.medium"] # 2 types = more Spot pools = fewer interruptions
 
       min_size     = 2
       desired_size = 2
