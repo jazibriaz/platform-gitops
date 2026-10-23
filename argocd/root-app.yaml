@@ -1,0 +1,19 @@
+# The only Application applied by hand. It watches argocd/apps/ and creates every app defined there.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/jazibriaz/platform-gitops.git
+    targetRevision: main
+    path: argocd/apps
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true      # delete a file from argocd/apps/ and that app is removed
+      selfHeal: true
