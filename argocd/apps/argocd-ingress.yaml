@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd-ingress
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io     # removing the app removes the Ingress, so the ALB and DNS record go too
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/jazibriaz/platform-gitops.git
+    targetRevision: main
+    path: platform/argocd-ingress               # a plain folder of YAML: no Helm, no Kustomize
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
