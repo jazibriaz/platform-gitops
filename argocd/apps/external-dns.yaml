@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: external-dns
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://kubernetes-sigs.github.io/external-dns/
+    chart: external-dns
+    targetRevision: <CHART_VERSION>
+    helm:
+      releaseName: external-dns
+      valuesObject:
+        provider:
+          name: aws
+        env:
+          - name: AWS_DEFAULT_REGION
+            value: eu-west-1
+        domainFilters: ["forgemyrig.com"]
+        policy: sync                 # create AND delete its own records
+        txtOwnerId: pcforge          # marks which records are ours
+        sources: ["ingress"]
+        serviceAccount:
+          create: true
+          name: external-dns         # must match the Pod Identity association
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: external-dns
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
