@@ -59,3 +59,9 @@ variable "app_repo_id" {
   description = "Numeric ID of the pcforge repo"
   type        = string
 }
+
+variable "domain_name" {
+  description = "Public domain, registered at GoDaddy and delegated to Route 53"
+  type        = string
+  default     = "forgemyrig.com"
+}
