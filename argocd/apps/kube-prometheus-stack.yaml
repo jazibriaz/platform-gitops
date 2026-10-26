@@ -1,0 +1,61 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kube-prometheus-stack
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: 92.13.1
+    helm:
+      releaseName: kps
+      valuesObject:
+        # EKS hides the control plane: don't try to scrape it (would show DOWN + false alerts)
+        kubeEtcd: { enabled: false }
+        kubeControllerManager: { enabled: false }
+        kubeScheduler: { enabled: false }
+        kubeProxy: { enabled: false }
+        prometheus:
+          prometheusSpec:
+            retention: 2d
+            # pick up ServiceMonitors / PrometheusRules from ANY namespace and chart
+            serviceMonitorSelectorNilUsesHelmValues: false
+            podMonitorSelectorNilUsesHelmValues: false
+            ruleSelectorNilUsesHelmValues: false
+            resources:
+              requests: { cpu: 100m, memory: 512Mi }
+              limits: { memory: 1536Mi }
+        alertmanager:
+          alertmanagerSpec:
+            resources:
+              requests: { cpu: 10m, memory: 64Mi }
+              limits: { memory: 128Mi }
+        grafana:
+          admin:
+            existingSecret: grafana-admin
+            userKey: admin-user
+            passwordKey: admin-password
+          ingress:
+            enabled: true
+            ingressClassName: alb
+            annotations:
+              alb.ingress.kubernetes.io/scheme: internet-facing
+              alb.ingress.kubernetes.io/target-type: ip
+              alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS": 443}]'
+              alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-west-1:833167447551:certificate/a8397d6a-ec10-419b-bb24-d7149174c01f
+              alb.ingress.kubernetes.io/inbound-cidrs: 79.117.195.243/32, 85.48.191.106/32   # home, office
+              alb.ingress.kubernetes.io/healthcheck-path: /api/health
+            hosts: ["grafana.forgemyrig.com"]
+            path: /
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true      # CRDs are too large for client-side apply
