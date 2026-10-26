@@ -1,0 +1,57 @@
+# Platform-owned capacity alerts. App-level alerts live with each app's chart.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: cluster-capacity
+  namespace: monitoring
+spec:
+  groups:
+    - name: cluster-capacity
+      rules:
+        - alert: ClusterCPURequestsHigh
+          expr: |
+            sum(kube_pod_container_resource_requests{resource="cpu"})
+              / sum(kube_node_status_allocatable{resource="cpu"}) > 0.80
+          for: 10m
+          labels: { severity: warning }
+          annotations:
+            summary: "Over 80% of the cluster's allocatable CPU is requested: new pods may not schedule"
+            action: "Add nodes (raise node group max / check the autoscaler) or right-size requests"
+
+        - alert: ClusterMemoryRequestsHigh
+          expr: |
+            sum(kube_pod_container_resource_requests{resource="memory"})
+              / sum(kube_node_status_allocatable{resource="memory"}) > 0.80
+          for: 10m
+          labels: { severity: warning }
+          annotations:
+            summary: "Over 80% of the cluster's allocatable memory is requested: new pods may not schedule"
+            action: "Add nodes or right-size memory requests"
+
+        - alert: NodePodCapacityHigh
+          expr: |
+            count by (node) (kube_pod_info{node!=""})
+              / on (node) kube_node_status_capacity{resource="pods"} > 0.85
+          for: 10m
+          labels: { severity: warning }
+          annotations:
+            summary: "A node is above 85% of its max pods (on EKS this limit comes from ENIs x IPs per ENI)"
+            action: "Spread pods, add nodes, or enable VPC CNI prefix delegation"
+
+        - alert: PodsStuckPending
+          expr: |
+            sum by (namespace, pod) (kube_pod_status_phase{phase="Pending"}) > 0
+          for: 3m
+          labels: { severity: warning }
+          annotations:
+            summary: "A pod has been Pending for more than 3 minutes (unschedulable or image pull issues)"
+            action: "kubectl describe pod: read the Events (insufficient cpu/memory, taints, volume, pod limit)"
+
+        - alert: NodeMemoryAvailableLow
+          expr: |
+            node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 0.10
+          for: 5m
+          labels: { severity: critical }
+          annotations:
+            summary: "A node has less than 10% memory available: OOM kills likely"
+            action: "Find the heavy pods (Grafana: Compute Resources / Node), check limits, add capacity"
