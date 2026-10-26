@@ -5,6 +5,11 @@ module "eks" {
   name               = var.cluster_name
   kubernetes_version = var.kubernetes_version
 
+  # Control plane logs to CloudWatch: off for the lab (audit alone blew the 5 GB free tier).
+  # Production: keep at least "audit" with a retention period, or ship it to the SIEM.
+  enabled_log_types                      = []
+  cloudwatch_log_group_retention_in_days = 1
+
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.vpc.private_subnets # nodes and control-plane ENIs go in private subnets
 
